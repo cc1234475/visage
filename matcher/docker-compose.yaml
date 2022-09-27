@@ -1,0 +1,6 @@
+services:
+  matcher:
+    # image: cc12344567/facematcher
+    build: .
+    volumes:
+      - /path/to/images:/images

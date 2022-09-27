@@ -1,0 +1,9 @@
+services:
+  hasher:
+    # image: cc12344567/facehasher
+    build: .
+    environment:
+      - TF_ENABLE_ONEDNN_OPTS=0
+    volumes:
+      - /path/to/images:/images
+    runtime: nvidia

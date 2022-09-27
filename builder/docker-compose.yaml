@@ -1,0 +1,6 @@
+services:
+  builder:
+    # image: cc12344567/facebuilder
+    build: .
+    volumes:
+      - /path/to/images:/images
