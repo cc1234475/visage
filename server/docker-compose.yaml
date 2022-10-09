@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - TF_ENABLE_ONEDNN_OPTS=0
+    volumes:
+      - ./.deepface:/root/.deepface
+      - ./face.json:/app/face.json
+      - ./face.db:/app/face.db
+      - ./performers.json:/app/performers.json
+    command: uvicorn main:app --host 0.0.0.0
+    runtime: nvidia
