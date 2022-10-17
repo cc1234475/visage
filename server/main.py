@@ -1,34 +1,39 @@
+import os
 import time
 import uuid
 from typing import List, Optional
 
 import json
+import base64
 import numpy as np
 from PIL import Image
 from io import BytesIO
 from annoy import AnnoyIndex
 from deepface.commons import functions
 from deepface.basemodels import Facenet512
-from fastapi import FastAPI, UploadFile, HTTPException
+from fastapi import FastAPI, UploadFile, HTTPException, Form
 from pydantic import BaseModel, Field
 
 ## Setup the app and load everything into memory
 app = FastAPI()
 
 # load the face model
-vector_size = 512
 model = Facenet512.loadModel()
 
 input_shape_x, input_shape_y = functions.find_input_shape(model)
 
 # setup the annoy index, nearest neighbors search
-index = AnnoyIndex(vector_size, "euclidean")
+index = AnnoyIndex(512, "euclidean")
 index.load(f"face.db")
 
 # load the stash performer index and annoy index, the annoy index maps to the id's in the .ann file
 # the performers db holds stashdb performer id's and the performer name and image
 ANNOY_INDEX = json.load(open(f"face.json"))
-PERFORMER_DB = json.load(open("performers.json"))
+
+if os.path.exists("performers.json"):
+    PERFORMER_DB = json.load(open("performers.json"))
+else:
+    PERFORMER_DB = {}
 
 ## setup the models used in the API
 
@@ -47,25 +52,33 @@ class Performer(BaseModel):
 class PerformerSearch(BaseModel):
     id: str = Field(..., title="The stashface ID")
     performers: List[Performer] = Field(
-        ..., description="List of performers sorted by clostest distance"
+        ..., description="List of performers sorted by closetest distance"
     )
-
-class Search(BaseModel):
-    vector: List[float] = Field(..., description="The face vector")
-
 
 ## API endpoints
 
 
 @app.post("/", name="recognise", response_model=PerformerSearch)
-async def recognise(file: UploadFile):
-    if not file.filename.endswith((".jpg", ".jpeg", ".png", ".webp")):
+async def recognise(file: Optional[UploadFile] = None, image: Optional[str] = Form(None), results: int = 10):
+
+    if file is None and image is None:
         raise HTTPException(
-            status_code=400,
-            detail="Invalid file type (only .jpg, .jpeg and .png are allowed)",
+            status_code=400, detail="You must provide either a file or a URL or image as base64"
         )
 
-    content = await file.read()
+    elif file:
+        if not file.filename.endswith((".jpg", ".jpeg", ".png", ".webp")):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file type (only .jpg, .jpeg and .png are allowed)",
+            )
+        content = await file.read()
+    
+    elif image:
+        image = image.replace(" ", "+")
+        if image[-2:] != "==":
+            image += "=="
+        content = base64.decodebytes(bytes(image, "utf-8"))
 
     try:
         image = Image.open(BytesIO(content))
@@ -97,18 +110,10 @@ async def recognise(file: UploadFile):
     face = model.predict(img)[0].tolist()
     print("Face embedding in", time.time() - t)
 
-    return lookup_performer(face)
+    return lookup_performer(face, results)
 
 
-@app.post("/search", name="search")
-async def confirm(obj: Search):
-    if len(obj.vector) != 512:
-        raise HTTPException(status_code=400, detail="Invalid vector size")
-
-    return lookup_performer(obj.vector)
-
-
-def lookup_performer(vector):
+def lookup_performer(vector, results: int):
     # create a unique id for the request
     uid = str(uuid.uuid4())
 
@@ -137,5 +142,5 @@ def lookup_performer(vector):
 
     return {
         "id": uid,
-        "performers": sorted(persons.values(), key=lambda x: x["distance"])[:10],
+        "performers": sorted(persons.values(), key=lambda x: x["distance"])[:results],
     }
