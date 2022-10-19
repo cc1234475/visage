@@ -3,10 +3,6 @@ import os
 import json
 from annoy import AnnoyIndex
 
-vector_size = 512
-
-t = AnnoyIndex(vector_size, 'euclidean')
-
 print("Finding vectors from the filesystem")
 
 ids = []
@@ -32,12 +28,14 @@ for root, dirs, files in os.walk("/images"):
 
 print("Building index")
 
+t = AnnoyIndex(512, 'euclidean')
 for i, vector in enumerate(vectors):
     t.add_item(i, vector)
 
 print("Build a forest of trees...")
 # 100 trees is a good default
-t.build(100)
+trees = int(os.getenv("VISAGE_TREES", 100))
+t.build(trees)
 
 print("Save database and index")
 

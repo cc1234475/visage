@@ -4,3 +4,5 @@ services:
     build: .
     volumes:
       - /path/to/images:/images
+    environment:
+      - VISAGE_TREES=100

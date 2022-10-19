@@ -1,5 +1,6 @@
 services:
   api:
+    # image: cc12344567/faceserver
     build: .
     ports:
       - "8000:8000"

@@ -7,7 +7,6 @@ from deepface.basemodels import Facenet512
 
 print("Loading model")
 # load the face model
-vector_size = 512
 model = Facenet512.loadModel()
 input_shape_x, input_shape_y = functions.find_input_shape(model)
 
