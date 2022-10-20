@@ -1,8 +1,20 @@
 # visage
 
-Visage is a series of docker images that preform facial recognition on images and create a searchable database.
+Visage is a series of tools to do facial recognition on images (and create a searchable database). mainly used in combination with [Stash](https://github.com/stashapp/stash)
 
-Basic workflow is the following: 
+# Stash Userscripts
+
+Installation requires a browser extension such as [Violentmonkey](https://violentmonkey.github.io/) / [Tampermonkey](https://www.tampermonkey.net/) / [Greasemonkey](https://www.greasespot.net/).
+
+**By default the userscripts only work for `http://localhost:9999`**
+
+> If you access Stash from a different address, you will need to modify the userscript when you install it.
+>
+> Find the line `// @match       http://localhost:9999/*` and replace `http://localhost:9999/*` with your Stash address.
+
+[INSTALL USERSCRIPT](userscript/visage.js?raw=1)
+
+# Workflow to create you own database
 
 ## Get a folder with images.
 
