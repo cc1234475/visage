@@ -16,7 +16,24 @@ Installation requires a browser extension such as [Violentmonkey](https://violen
 >
 > Find the line `// @match       http://localhost:9999/*` and replace `http://localhost:9999/*` with your Stash address.
 
-[INSTALL USERSCRIPT](userscript/visage.user.js?raw=1)
+[INSTALL USERSCRIPT](userscript/visage.js?raw=1)
+
+Once installed, A new icon will show on a scene's page.
+
+![](_media/face_scan_icon.png)
+
+hitting the 
+
+
+## Known issues and missing features
+
+- [ ] No error messages are show in the UI
+  - [ ] When no face can be detected
+  - [ ] When no result is returned from the API
+  - [ ] When creating a performer from stashbox but the local stash instance is giving a checksum error
+- [ ] Scan a region of the screen to scan a single performer
+- [ ] Scan for multiple performers
+- [ ] On matches, link to stashbox so person can check other photo's of performer
 
 
 # Running facial recognition locally (Optional)
