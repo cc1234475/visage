@@ -64,7 +64,6 @@ class Search(BaseModel):
 
 ## API endpoints
 
-
 @app.post("/recognise", name="recognise", response_model=PerformerSearch)
 async def recognise(
     file: Optional[UploadFile] = None,

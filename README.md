@@ -1,6 +1,10 @@
-# visage
+# Visage
 
-Visage is a series of tools to do facial recognition on images (and create a searchable database). mainly used in combination with [Stash](https://github.com/stashapp/stash)
+Visage is a series of tools to do facial recognition on images (and create a searchable database). 
+
+![](_media/logo.png)
+
+Mainly used in combination with [Stash](https://github.com/stashapp/stash)
 
 # Stash Userscripts
 
@@ -14,9 +18,9 @@ Installation requires a browser extension such as [Violentmonkey](https://violen
 
 [INSTALL USERSCRIPT](userscript/visage.js?raw=1)
 
-# Workflow to create you own database
+# Create you own database
 
-## Get a folder with images.
+## Get a folder with images
 
 using the following folder structure.
 
