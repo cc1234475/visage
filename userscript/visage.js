@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  Match faces to performers
 // @author       cc12344567
-// @match        https://nozomi.whatbox.ca:15835/*
+// @match        http://localhost:9999/*
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @require      https://code.jquery.com/jquery-2.0.3.min.js
@@ -251,10 +251,9 @@
       const formData = new FormData();
       formData.append("image", image);
 
-      // url: "https://stashface.eu.ngrok.io/",
       var requestDetails = {
         method: "POST",
-        url: "http://localhost:8000/recognise?results=3",
+        url: "https://stashface.eu.ngrok.io/recognise?results=3",
         data: formData,
         onload: function (response) {
           var data = JSON.parse(response.responseText);
