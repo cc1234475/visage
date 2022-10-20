@@ -18,22 +18,9 @@ Installation requires a browser extension such as [Violentmonkey](https://violen
 
 [INSTALL USERSCRIPT](userscript/visage.js?raw=1)
 
-Once installed, A new icon will show on a scene's page.
+Once installed, A new icon will show on a scene's page next to the organized button.
 
 ![](_media/face_scan_icon.png)
-
-hitting the 
-
-
-## Known issues and missing features
-
-- [ ] No error messages are show in the UI
-  - [ ] When no face can be detected
-  - [ ] When no result is returned from the API
-  - [ ] When creating a performer from stashbox but the local stash instance is giving a checksum error
-- [ ] Scan a region of the screen to scan a single performer
-- [ ] Scan for multiple performers
-- [ ] On matches, link to stashbox so person can check other photo's of performer
 
 
 # Running facial recognition locally (Optional)
@@ -101,3 +88,15 @@ This should give two files at the root of the folder you made available the cont
 Once again. modify the docker-compose.
 
 It creates a <image name>.json file with 10 closest results
+
+
+## Known issues and missing features
+
+- [ ] No error messages are show in the UI
+  - [ ] When no face can be detected
+  - [ ] When no result is returned from the API
+  - [ ] When creating a performer from stashbox but the local stash instance is giving a checksum error
+- [ ] Scan a region of the screen to scan a single performer
+- [ ] Scan for multiple performers
+- [ ] On matches, link to stashbox so person can check other photo's of performer
+
