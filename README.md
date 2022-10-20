@@ -16,7 +16,7 @@ Installation requires a browser extension such as [Violentmonkey](https://violen
 >
 > Find the line `// @match       http://localhost:9999/*` and replace `http://localhost:9999/*` with your Stash address.
 
-[INSTALL USERSCRIPT](userscript/visage.js?raw=1)
+[INSTALL USERSCRIPT](userscript/visage.user.js?raw=1)
 
 
 # Running facial recognition locally (Optional)
