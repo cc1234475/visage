@@ -99,4 +99,3 @@ It creates a <image name>.json file with 10 closest results
 - [ ] Scan a region of the screen to scan a single performer
 - [ ] Scan for multiple performers
 - [ ] On matches, link to stashbox so person can check other photo's of performer
-

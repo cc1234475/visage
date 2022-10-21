@@ -151,7 +151,7 @@ async def recognise(
 
 
 @app.post("/confirm", name="confirm")
-async def confirm(obj: Confirm):
+async def confirm(id: str = Form(...), performer_id: str = Form(...)):
     """Confirm a result stashface gave.
 
     When stashface gives a result it will return a unique ID per request.
@@ -166,14 +166,14 @@ async def confirm(obj: Confirm):
     - The performer ID is not a valid UUID
 
     """
-    if not is_valid_uuid(obj.id):
+    if not is_valid_uuid(id):
         raise HTTPException(status_code=400, detail="Invalid stashface ID")
 
-    if not is_valid_uuid(obj.performer_id):
+    if not is_valid_uuid(performer_id):
         raise HTTPException(status_code=400, detail="Invalid stashDB ID")
 
     with open("uploads/confirmed.txt", "a") as f:
-        f.write(f"{obj.id} = {obj.performer_id}")
+        f.write(f"{id} = {performer_id}")
 
     return {"status": "ok", "message": "Thank you!"}
 

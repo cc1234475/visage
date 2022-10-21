@@ -12,3 +12,5 @@ RUN pip uninstall -y enum34
 RUN pip install --ignore-installed --upgrade-strategy only-if-needed -r requirements.txt
 
 COPY main.py /app/
+
+CMD [ "uvicorn", "main:app", "--host", "0.0.0.0" ]

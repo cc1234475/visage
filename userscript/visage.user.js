@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         visage
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  Match faces to performers
 // @author       cc12344567
 // @match        http://localhost:9999/*
@@ -14,6 +14,7 @@
 
 var VISAGE_API_URL = "https://stashface.eu.ngrok.io";
 // var VISAGE_API_URL = "http://localhost:8000";
+var REPORT_CORRECT_MATCHES = false;
 
 (function () {
   "use strict";
@@ -67,10 +68,6 @@ var VISAGE_API_URL = "https://stashface.eu.ngrok.io";
   </div>
 </div>`;
 
-  var error = `<div class="fade toast danger show" role="alert" aria-live="assertive" aria-atomic="true">
-  <div class="toast-body">an error occurred, please check the devtools for errors.</div>
-</div>`
-
   var top = `<div role="dialog" aria-modal="true" class="fade ModalComponent modal show" tabindex="-1" style="display: block">
 <div class="modal-dialog scrape-query-dialog modal-xl">
   <div class="modal-content">
@@ -98,6 +95,7 @@ var VISAGE_API_URL = "https://stashface.eu.ngrok.io";
 <div class="ModalFooter modal-footer">
   <div>
     <button id="face_cancel" type="button" class="ml-2 btn btn-secondary">Cancel</button>
+    <button id="face_toggle" type="button" class="ml-2 btn btn-secondary">Toggle Visibility</button>
   </div>
 </div>
 </div>
@@ -108,10 +106,15 @@ var VISAGE_API_URL = "https://stashface.eu.ngrok.io";
     // find a performer with the same stash id in the user instance of stash
     var performers = await get_performers(id_);
     performers = performers.data.findPerformers.performers;
-    // if the users doesn't have a performer with the same stash id, get the data from stashDB and create a new performer
+    // if the users doesn't have a performer with the same stash id, get the data from stash box and create a new performer
     if (performers.length === 0) {
       var performer = await get_performer_data_based_on_name(name);
       performer = performer.data.scrapeSinglePerformer.filter((p) => p.remote_site_id === id_)[0];
+      if (performer === undefined) {
+        alert("Could not retrieve performer data from stash box");
+        return;
+      }
+
       performer.image = performer.images[0];
       var endpoint = await get_stashbox_endpoint();
       endpoint = endpoint.data.configuration.general.stashBoxes[0].endpoint;
@@ -251,7 +254,7 @@ var VISAGE_API_URL = "https://stashface.eu.ngrok.io";
     return stash.callGQL(reqData);
   }
 
-  function show_matches(matches) {
+  function show_matches(visage_id, matches) {
     var html = top;
     for (var i = 0; i < matches.length; i++) {
       let per = matches[i];
@@ -261,23 +264,50 @@ var VISAGE_API_URL = "https://stashface.eu.ngrok.io";
     $("body").append(html);
 
     $("#face_cancel").click(function () {
-      $(".ModalComponent").remove();
+      close_modal();
+    });
+
+    $("#face_toggle").click(function () {
+      var obj = $(".ModalComponent");
+      if (obj.css('opacity') == '0.1'){
+        $(".ModalComponent").css('opacity', '1.0');
+      }else{
+        $(".ModalComponent").css('opacity', '0.1');
+      }
     });
 
     $("#face-0").click(function () {
       add_performer(matches[0].id, matches[0].name);
-      $(".ModalComponent").remove();
+      close_modal();
+      acknowledge_match(visage_id, matches[0].id);
     });
 
     $("#face-1").click(function () {
       add_performer(matches[1].id, matches[1].name);
-      $(".ModalComponent").remove();
+      close_modal();
+      acknowledge_match(visage_id, matches[1].id);
     });
 
     $("#face-2").click(function () {
       add_performer(matches[2].id, matches[2].name);
-      $(".ModalComponent").remove();
+      close_modal();
+      acknowledge_match(visage_id, matches[2].id);
     });
+  }
+
+  function acknowledge_match(visage_id, performer_id) {
+    if (REPORT_CORRECT_MATCHES === false) return;
+
+    const formData = new FormData();
+    formData.append("id", visage_id);
+    formData.append("performer_id", performer_id);
+
+    var requestDetails = {
+      method: "POST",
+      url: VISAGE_API_URL + "/confirm",
+      data: formData
+    };
+    GM_xmlhttpRequest(requestDetails);
   }
 
   function recognize() {
@@ -296,20 +326,24 @@ var VISAGE_API_URL = "https://stashface.eu.ngrok.io";
         onload: function (response) {
           var data = JSON.parse(response.responseText);
           // Remove the scanning modal
-          $(".ModalComponent").remove();
+          close_modal();
           if (data.performers.length === 0) {
             alert("No matches found");
             return;
           }
-          show_matches(data.performers);
+          show_matches(data.id, data.performers);
         },
         onerror: function (response) {
-          $(".ModalComponent").remove();
+          close_modal();
           alert("Error: " + response.responseText);
         }
       };
       GM_xmlhttpRequest(requestDetails);
     });
+  }
+
+  function close_modal(){
+    $(".ModalComponent").remove();
   }
 
   stash.addEventListener("page:scene", function () {
@@ -320,9 +354,7 @@ var VISAGE_API_URL = "https://stashface.eu.ngrok.io";
       btn.setAttribute("title", "Scan for performer");
       btn.classList.add("btn", "btn-secondary", "minimal");
       btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="mdi-magnify-scan" width="20" height="20" viewBox="0 0 24 24"><path d="M17 22V20H20V17H22V20.5C22 20.89 21.84 21.24 21.54 21.54C21.24 21.84 20.89 22 20.5 22H17M7 22H3.5C3.11 22 2.76 21.84 2.46 21.54C2.16 21.24 2 20.89 2 20.5V17H4V20H7V22M17 2H20.5C20.89 2 21.24 2.16 21.54 2.46C21.84 2.76 22 3.11 22 3.5V7H20V4H17V2M7 2V4H4V7H2V3.5C2 3.11 2.16 2.76 2.46 2.46C2.76 2.16 3.11 2 3.5 2H7M10.5 6C13 6 15 8 15 10.5C15 11.38 14.75 12.2 14.31 12.9L17.57 16.16L16.16 17.57L12.9 14.31C12.2 14.75 11.38 15 10.5 15C8 15 6 13 6 10.5C6 8 8 6 10.5 6M10.5 8C9.12 8 8 9.12 8 10.5C8 11.88 9.12 13 10.5 13C11.88 13 13 11.88 13 10.5C13 9.12 11.88 8 10.5 8Z" style="fill: rgb(255, 255, 255);" /></svg>';
-      btn.onclick = () => {
-        recognize();
-      };
+      btn.onclick = recognize;
       grp.appendChild(btn);
     });
   });
