@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         visage
 // @namespace    https://github.com/cc1234475
-// @version      0.3
+// @version      0.4
 // @description  Match faces to performers
 // @author       cc12344567
 // @match        http://localhost:9999/*
@@ -105,11 +105,10 @@ var REPORT_CORRECT_MATCHES = false;
   async function add_performer(id_, name) {
     // find a performer with the same stash id in the user instance of stash
     var performers = await get_performers(id_);
-    performers = performers.data.findPerformers.performers;
     // if the users doesn't have a performer with the same stash id, get the data from stash box and create a new performer
     if (performers.length === 0) {
       var performer = await get_performer_data_based_on_name(name);
-      performer = performer.data.scrapeSinglePerformer.filter((p) => p.remote_site_id === id_)[0];
+
       if (performer === undefined) {
         alert("Could not retrieve performer data from stash box");
         return;
@@ -117,7 +116,6 @@ var REPORT_CORRECT_MATCHES = false;
 
       performer.image = performer.images[0];
       var endpoint = await get_stashbox_endpoint();
-      endpoint = endpoint.data.configuration.general.stashBoxes[0].endpoint;
 
       // delete some fields that are not needed and will not be accepted by local stash instance
       delete performer.images;
@@ -131,21 +129,40 @@ var REPORT_CORRECT_MATCHES = false;
       id_ = performers[0].id;
     }
 
-    // get the current list of performers, so we can add the new performer to the list
-    var scene_id = document.URL.match(/scenes\/(\d+)/);
-    scene_id = scene_id[1];
-    var scene_performers = await get_performers_for_scene(scene_id);
-    scene_performers = scene_performers.data.findScene.performers;
-    var perform_ids = scene_performers.map((p) => p.id);
-    if (perform_ids.includes(id_)){
-      alert("Performer already assigned to scene");
-      return;
+    let [scenario, scenario_id] = get_scenario_and_id();
+
+    if (scenario === "scenes") {
+      var perform_ids = await get_performers_for_scene(scenario_id);
+
+      if (perform_ids.includes(id_)) {
+        alert("Performer already assigned to scene");
+        return;
+      }
+
+      perform_ids.push(id_);
+
+      await update_scene(scenario_id, perform_ids);
+    } else if (scenario === "images") {
+      var perform_ids = await get_performers_for_image(scenario_id);
+
+      if (perform_ids.includes(id_)) {
+        alert("Performer already assigned to scene");
+        return;
+      }
+
+      perform_ids.push(id_);
+
+      await update_image(scenario_id, perform_ids);
     }
 
-    perform_ids.push(id_);
-
-    await update_scene(scene_id, perform_ids);
     location.reload();
+  }
+
+  function get_scenario_and_id() {
+    var result = document.URL.match(/(scenes|images)\/(\d+)/);
+    var scenario = result[1];
+    var scenario_id = result[2];
+    return [scenario, scenario_id];
   }
 
   async function get_performers(performer_id) {
@@ -159,7 +176,8 @@ var REPORT_CORRECT_MATCHES = false;
         }
       }`,
     };
-    return stash.callGQL(reqData);
+    var results = await stash.callGQL(reqData);
+    return results.data.findPerformers.performers;
   }
 
   async function get_performers_for_scene(scene_id) {
@@ -172,7 +190,22 @@ var REPORT_CORRECT_MATCHES = false;
         }
       }`,
     };
-    return stash.callGQL(reqData);
+    var result = await stash.callGQL(reqData);
+    return result.data.findScene.performers.map((p) => p.id);
+  }
+
+  async function get_performers_for_image(image_id) {
+    const reqData = {
+      query: `{
+        findImage(id: "${image_id}") {
+          performers {
+            id
+          }
+        }
+      }`,
+    };
+    var result = await stash.callGQL(reqData);
+    return result.data.findImage.performers.map((p) => p.id);
   }
 
   async function update_scene(scene_id, performer_ids) {
@@ -180,6 +213,18 @@ var REPORT_CORRECT_MATCHES = false;
       variables: { input: { id: scene_id, performer_ids: performer_ids } },
       query: `mutation sceneUpdate($input: SceneUpdateInput!){
         sceneUpdate(input: $input) {
+          id
+        }
+      }`,
+    };
+    return stash.callGQL(reqData);
+  }
+
+  async function update_image(image_id, performer_ids) {
+    const reqData = {
+      variables: { input: { id: image_id, performer_ids: performer_ids } },
+      query: `mutation imageUpdate($input: ImageUpdateInput!){
+        imageUpdate(input: $input) {
           id
         }
       }`,
@@ -199,7 +244,8 @@ var REPORT_CORRECT_MATCHES = false;
         }
       }`,
     };
-    return stash.callGQL(reqData);
+    var result = await stash.callGQL(reqData);
+    return result.data.configuration.general.stashBoxes[0].endpoint;
   }
 
   async function get_performer_data_based_on_name(performer_name) {
@@ -239,7 +285,10 @@ var REPORT_CORRECT_MATCHES = false;
           }
         }`,
     };
-    return stash.callGQL(reqData);
+    var result = await stash.callGQL(reqData);
+    return result.data.scrapeSinglePerformer.filter(
+      (p) => p.remote_site_id === id_
+    )[0];
   }
 
   async function create_performer(performer) {
@@ -258,7 +307,7 @@ var REPORT_CORRECT_MATCHES = false;
     var html = top;
     for (var i = 0; i < matches.length; i++) {
       let per = matches[i];
-      html += match(i, per.name, per.image, per.distance);
+      html += match(i, per.name, per.image, round(per.distance));
     }
     html += bottom;
     $("body").append(html);
@@ -269,10 +318,10 @@ var REPORT_CORRECT_MATCHES = false;
 
     $("#face_toggle").click(function () {
       var obj = $(".ModalComponent");
-      if (obj.css('opacity') == '0.1'){
-        $(".ModalComponent").css('opacity', '1.0');
-      }else{
-        $(".ModalComponent").css('opacity', '0.1');
+      if (obj.css("opacity") == "0.1") {
+        $(".ModalComponent").css("opacity", "1.0");
+      } else {
+        $(".ModalComponent").css("opacity", "0.1");
       }
     });
 
@@ -305,13 +354,21 @@ var REPORT_CORRECT_MATCHES = false;
     var requestDetails = {
       method: "POST",
       url: VISAGE_API_URL + "/confirm",
-      data: formData
+      data: formData,
     };
     GM_xmlhttpRequest(requestDetails);
   }
 
   function recognize() {
-    html2canvas(document.querySelector("#VideoJsPlayer")).then((canvas) => {
+    let [scenario, scenario_id] = get_scenario_and_id();
+
+    if (scenario === "scenes") {
+      var selector = "#VideoJsPlayer";
+    } else if (scenario === "images") {
+      var selector = ".image-image";
+    }
+
+    html2canvas(document.querySelector(selector)).then((canvas) => {
       let image = canvas.toDataURL("image/jpg");
       image = image.replace(/^data:image\/(png|jpg);base64,/, "");
       $("body").append(scanning);
@@ -325,7 +382,6 @@ var REPORT_CORRECT_MATCHES = false;
         data: formData,
         onload: function (response) {
           var data = JSON.parse(response.responseText);
-          // Remove the scanning modal
           close_modal();
           if (data.performers.length === 0) {
             alert("No matches found");
@@ -336,26 +392,39 @@ var REPORT_CORRECT_MATCHES = false;
         onerror: function (response) {
           close_modal();
           alert("Error: " + response.responseText);
-        }
+        },
       };
       GM_xmlhttpRequest(requestDetails);
     });
   }
 
-  function close_modal(){
+  function close_modal() {
     $(".ModalComponent").remove();
   }
 
-  stash.addEventListener("page:scene", function () {
+  function round(value) {
+    return +parseFloat(value).toFixed(2);
+  }
+
+  function create_button(action) {
     waitForElm(".ml-auto .btn-group").then(() => {
       const grp = document.querySelector(".ml-auto .btn-group");
       const btn = document.createElement("button");
       btn.setAttribute("id", "facescan");
       btn.setAttribute("title", "Scan for performer");
       btn.classList.add("btn", "btn-secondary", "minimal");
-      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="mdi-magnify-scan" width="20" height="20" viewBox="0 0 24 24"><path d="M17 22V20H20V17H22V20.5C22 20.89 21.84 21.24 21.54 21.54C21.24 21.84 20.89 22 20.5 22H17M7 22H3.5C3.11 22 2.76 21.84 2.46 21.54C2.16 21.24 2 20.89 2 20.5V17H4V20H7V22M17 2H20.5C20.89 2 21.24 2.16 21.54 2.46C21.84 2.76 22 3.11 22 3.5V7H20V4H17V2M7 2V4H4V7H2V3.5C2 3.11 2.16 2.76 2.46 2.46C2.76 2.16 3.11 2 3.5 2H7M10.5 6C13 6 15 8 15 10.5C15 11.38 14.75 12.2 14.31 12.9L17.57 16.16L16.16 17.57L12.9 14.31C12.2 14.75 11.38 15 10.5 15C8 15 6 13 6 10.5C6 8 8 6 10.5 6M10.5 8C9.12 8 8 9.12 8 10.5C8 11.88 9.12 13 10.5 13C11.88 13 13 11.88 13 10.5C13 9.12 11.88 8 10.5 8Z" style="fill: rgb(255, 255, 255);" /></svg>';
-      btn.onclick = recognize;
+      btn.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="mdi-magnify-scan" width="20" height="20" viewBox="0 0 24 24"><path d="M17 22V20H20V17H22V20.5C22 20.89 21.84 21.24 21.54 21.54C21.24 21.84 20.89 22 20.5 22H17M7 22H3.5C3.11 22 2.76 21.84 2.46 21.54C2.16 21.24 2 20.89 2 20.5V17H4V20H7V22M17 2H20.5C20.89 2 21.24 2.16 21.54 2.46C21.84 2.76 22 3.11 22 3.5V7H20V4H17V2M7 2V4H4V7H2V3.5C2 3.11 2.16 2.76 2.46 2.46C2.76 2.16 3.11 2 3.5 2H7M10.5 6C13 6 15 8 15 10.5C15 11.38 14.75 12.2 14.31 12.9L17.57 16.16L16.16 17.57L12.9 14.31C12.2 14.75 11.38 15 10.5 15C8 15 6 13 6 10.5C6 8 8 6 10.5 6M10.5 8C9.12 8 8 9.12 8 10.5C8 11.88 9.12 13 10.5 13C11.88 13 13 11.88 13 10.5C13 9.12 11.88 8 10.5 8Z" style="fill: rgb(255, 255, 255);" /></svg>';
+      btn.onclick = action;
       grp.appendChild(btn);
     });
+  }
+
+  stash.addEventListener("page:scene", function () {
+    create_button(recognize);
+  });
+
+  stash.addEventListener("page:image", function () {
+    create_button(recognize);
   });
 })();
