@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         visage
-// @namespace    http://tampermonkey.net/
+// @namespace    https://github.com/cc1234475
 // @version      0.3
 // @description  Match faces to performers
 // @author       cc12344567
