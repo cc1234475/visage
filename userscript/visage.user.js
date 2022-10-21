@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         visage
 // @namespace    https://github.com/cc1234475
-// @version      0.4
+// @version      0.4.1
 // @description  Match faces to performers
 // @author       cc12344567
 // @match        http://localhost:9999/*
+// @connect      stashface.eu.ngrok.io
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @require      https://code.jquery.com/jquery-2.0.3.min.js
@@ -107,7 +108,7 @@ var REPORT_CORRECT_MATCHES = false;
     var performers = await get_performers(id_);
     // if the users doesn't have a performer with the same stash id, get the data from stash box and create a new performer
     if (performers.length === 0) {
-      var performer = await get_performer_data_based_on_name(name);
+      var performer = await get_performer_data_based_on_name(name, id_);
 
       if (performer === undefined) {
         alert("Could not retrieve performer data from stash box");
@@ -248,7 +249,7 @@ var REPORT_CORRECT_MATCHES = false;
     return result.data.configuration.general.stashBoxes[0].endpoint;
   }
 
-  async function get_performer_data_based_on_name(performer_name) {
+  async function get_performer_data_based_on_name(performer_name, stash_id) {
     const reqData = {
       variables: {
         source: {
@@ -287,7 +288,7 @@ var REPORT_CORRECT_MATCHES = false;
     };
     var result = await stash.callGQL(reqData);
     return result.data.scrapeSinglePerformer.filter(
-      (p) => p.remote_site_id === id_
+      (p) => p.remote_site_id === stash_id
     )[0];
   }
 
