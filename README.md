@@ -22,6 +22,9 @@ Once installed, A new icon will show on a scene's page next to the organized but
 
 ![](_media/face_scan_icon.png)
 
+# How do I use it?
+
+![](_media/example.gif)
 
 # Running facial recognition locally (Optional)
 
