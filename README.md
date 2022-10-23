@@ -26,17 +26,6 @@ Once installed, A new icon will show on a scene's page next to the organized but
 
 ![](_media/example.gif)
 
-# Running facial recognition locally (Optional)
-
-By default, we use a externally hosted server to perform the facial recognition and return the responses.
-The server doesn't have a GPU and isn't the fastest, so running a local instance of the API will speed up recognition.
-
-`docker run -p "8000:8000" --gpus all cc12344567/faceserver`
-
-Modify the userscript to point to your own server.
-
-`url: "http://localhost:8000/recognise?results=3",`
-
 
 # Create you own database
 
