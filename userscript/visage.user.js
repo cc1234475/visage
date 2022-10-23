@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         visage
 // @namespace    https://github.com/cc1234475
-// @version      0.4.1
+// @version      0.5.0
 // @description  Match faces to performers
 // @author       cc12344567
 // @match        http://localhost:9999/*
-// @connect      stashface.eu.ngrok.io
+// @match        https://nozomi.whatbox.ca:15835/*
+// @connect      localhost
+// @connect      hf.space
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // @require      https://code.jquery.com/jquery-2.0.3.min.js
@@ -13,9 +15,9 @@
 // @require      https://raw.githubusercontent.com/7dJx1qP/stash-userscripts/master/src\StashUserscriptLibrary.js
 // ==/UserScript==
 
-var VISAGE_API_URL = "https://stashface.eu.ngrok.io";
-// var VISAGE_API_URL = "http://localhost:8000";
-var REPORT_CORRECT_MATCHES = false;
+var VISAGE_API_URL = "https://hf.space/embed/cc1234/stashface/+/api/predict";
+var THRESHOLD = 20.0; // remove matches with a distance higher than this
+var MAX_RESULTS = 3; // number of results to show, don't change this for now
 
 (function () {
   "use strict";
@@ -131,9 +133,10 @@ var REPORT_CORRECT_MATCHES = false;
     }
 
     let [scenario, scenario_id] = get_scenario_and_id();
+    var perform_ids;
 
     if (scenario === "scenes") {
-      var perform_ids = await get_performers_for_scene(scenario_id);
+      perform_ids = await get_performers_for_scene(scenario_id);
 
       if (perform_ids.includes(id_)) {
         alert("Performer already assigned to scene");
@@ -144,7 +147,7 @@ var REPORT_CORRECT_MATCHES = false;
 
       await update_scene(scenario_id, perform_ids);
     } else if (scenario === "images") {
-      var perform_ids = await get_performers_for_image(scenario_id);
+      perform_ids = await get_performers_for_image(scenario_id);
 
       if (perform_ids.includes(id_)) {
         alert("Performer already assigned to scene");
@@ -304,8 +307,9 @@ var REPORT_CORRECT_MATCHES = false;
     return stash.callGQL(reqData);
   }
 
-  function show_matches(visage_id, matches) {
+  function show_matches(matches) {
     var html = top;
+    console.log(matches.length);
     for (var i = 0; i < matches.length; i++) {
       let per = matches[i];
       html += match(i, per.name, per.image, round(per.distance));
@@ -329,66 +333,47 @@ var REPORT_CORRECT_MATCHES = false;
     $("#face-0").click(function () {
       add_performer(matches[0].id, matches[0].name);
       close_modal();
-      acknowledge_match(visage_id, matches[0].id);
     });
 
     $("#face-1").click(function () {
       add_performer(matches[1].id, matches[1].name);
       close_modal();
-      acknowledge_match(visage_id, matches[1].id);
     });
 
     $("#face-2").click(function () {
       add_performer(matches[2].id, matches[2].name);
       close_modal();
-      acknowledge_match(visage_id, matches[2].id);
     });
-  }
-
-  function acknowledge_match(visage_id, performer_id) {
-    if (REPORT_CORRECT_MATCHES === false) return;
-
-    const formData = new FormData();
-    formData.append("id", visage_id);
-    formData.append("performer_id", performer_id);
-
-    var requestDetails = {
-      method: "POST",
-      url: VISAGE_API_URL + "/confirm",
-      data: formData,
-    };
-    GM_xmlhttpRequest(requestDetails);
   }
 
   function recognize() {
     let [scenario, scenario_id] = get_scenario_and_id();
-
+    var selector;
     if (scenario === "scenes") {
-      var selector = "#VideoJsPlayer";
+      selector = "#VideoJsPlayer";
     } else if (scenario === "images") {
-      var selector = ".image-image";
+      selector = ".image-image";
     }
 
     html2canvas(document.querySelector(selector)).then((canvas) => {
       let image = canvas.toDataURL("image/jpg");
-      image = image.replace(/^data:image\/(png|jpg);base64,/, "");
       $("body").append(scanning);
-
-      const formData = new FormData();
-      formData.append("image", image);
-
+      var data = {"data": [image, THRESHOLD, MAX_RESULTS]};
       var requestDetails = {
         method: "POST",
-        url: VISAGE_API_URL + "/recognise?results=3",
-        data: formData,
+        url: VISAGE_API_URL,
+        data: JSON.stringify(data),
+        headers:    {
+          "Content-Type": "application/json; charset=utf-8"
+        },
         onload: function (response) {
           var data = JSON.parse(response.responseText);
           close_modal();
-          if (data.performers.length === 0) {
+          if (data.data[0].length === 0) {
             alert("No matches found");
             return;
           }
-          show_matches(data.id, data.performers);
+          show_matches(data.data[0]);
         },
         onerror: function (response) {
           close_modal();
