@@ -5,7 +5,6 @@
 // @description  Match faces to performers
 // @author       cc12344567
 // @match        http://localhost:9999/*
-// @match        https://nozomi.whatbox.ca:15835/*
 // @connect      localhost
 // @connect      hf.space
 // @grant        GM_xmlhttpRequest
