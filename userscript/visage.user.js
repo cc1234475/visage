@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         visage
 // @namespace    https://github.com/cc1234475
-// @version      0.5.0
+// @version      0.5.1
 // @description  Match faces to performers
 // @author       cc12344567
 // @match        http://localhost:9999/*
@@ -14,7 +14,8 @@
 // @require      https://raw.githubusercontent.com/7dJx1qP/stash-userscripts/master/src\StashUserscriptLibrary.js
 // ==/UserScript==
 
-var VISAGE_API_URL = "https://hf.space/embed/cc1234/stashface/+/api/predict";
+var VISAGE_API_URL = "https://cc1234-stashface.hf.space/api/predict";
+// var VISAGE_API_URL = "http://localhost:7860/api/predict";
 var THRESHOLD = 20.0; // remove matches with a distance higher than this
 var MAX_RESULTS = 3; // number of results to show, don't change this for now
 
