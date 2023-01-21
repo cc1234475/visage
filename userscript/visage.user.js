@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         visage
 // @namespace    https://github.com/cc1234475
-// @version      0.5.1
+// @version      0.5.2
 // @description  Match faces to performers
 // @author       cc12344567
 // @match        http://localhost:9999/*
@@ -78,7 +78,7 @@ var MAX_RESULTS = 3; // number of results to show, don't change this for now
     <div class="modal-body">
       <div class="row justify-content-center">`;
 
-  var match = (id, name, image, distance) => `
+  var match = (id, name, image, confidence) => `
   <div draggable="false" class="performer-card grid-card card" id="face-${id}" style="cursor: pointer;">
     <div class="thumbnail-section">
         <img class="performer-card-image" alt="${name}" src="${image}"/>
@@ -87,7 +87,7 @@ var MAX_RESULTS = 3; // number of results to show, don't change this for now
         <h5 class="card-section-title flex-aligned">
           <div style="-webkit-line-clamp: 2">
           ${name}
-          <span class="tag-item badge badge-pill"><div>${distance}</div></span>
+          <span class="tag-item badge badge-pill"><div>${confidence}%</div></span>
           </div>
         </h5>
     </div>
@@ -312,7 +312,7 @@ var MAX_RESULTS = 3; // number of results to show, don't change this for now
     console.log(matches.length);
     for (var i = 0; i < matches.length; i++) {
       let per = matches[i];
-      html += match(i, per.name, per.image, round(per.distance));
+      html += match(i, per.name, per.image, round(per.confidence));
     }
     html += bottom;
     $("body").append(html);
