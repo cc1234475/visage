@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         visage
 // @namespace    https://github.com/cc1234475
-// @version      0.5.2
+// @version      0.5.3
 // @description  Match faces to performers
 // @author       cc12344567
 // @match        http://localhost:9999/*
@@ -110,7 +110,7 @@ var MAX_RESULTS = 3; // number of results to show, don't change this for now
     var performers = await get_performers(id_);
     // if the users doesn't have a performer with the same stash id, get the data from stash box and create a new performer
     if (performers.length === 0) {
-      var performer = await get_performer_data_based_on_name(name, id_);
+      var performer = await get_performer_data_based_on_name(id_);
 
       if (performer === undefined) {
         alert("Could not retrieve performer data from stash box");
@@ -252,14 +252,14 @@ var MAX_RESULTS = 3; // number of results to show, don't change this for now
     return result.data.configuration.general.stashBoxes[0].endpoint;
   }
 
-  async function get_performer_data_based_on_name(performer_name, stash_id) {
+  async function get_performer_data_based_on_name(stash_id) {
     const reqData = {
       variables: {
         source: {
           stash_box_index: 0,
         },
         input: {
-          query: performer_name,
+          query: stash_id,
         },
       },
       query: `query ScrapeSinglePerformer($source: ScraperSourceInput!, $input: ScrapeSinglePerformerInput!) {
