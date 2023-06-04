@@ -2,7 +2,7 @@
 
 ![](_media/logo.png)
 
-Visage is a userscript for stash to do facial recognition on video's and images in [Stash](https://github.com/stashapp/stash). 
+Visage is a userscript to do facial recognition on video's and images in [Stash](https://github.com/stashapp/stash). 
 
 # Stash Userscripts
 
