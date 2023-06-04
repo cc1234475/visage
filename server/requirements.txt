@@ -1,6 +1,0 @@
-fastapi==0.85.0
-python-multipart==0.0.5
-pydantic==1.10.2
-annoy==1.17.1
-deepface==0.0.75
-uvicorn[standard]==0.18.3
